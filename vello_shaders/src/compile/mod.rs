@@ -44,6 +44,12 @@ enum InnerError {
     EntryPointNotFound,
 }
 
+impl From<Box<WithSpan<ValidationError>>> for InnerError {
+    fn from(error: Box<WithSpan<ValidationError>>) -> Self {
+        Self::Validate(*error)
+    }
+}
+
 impl fmt::Display for ErrorVec {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for e in self.0.iter() {
