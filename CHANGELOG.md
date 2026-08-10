@@ -15,6 +15,7 @@ This release has an [MSRV][] of 1.88.
 ### Added
 
 - Support for gradient interpolation in the unpremultiplied alpha space. ([#1268][] by [@sagudev][])
+- `wasm32-wasip1` and `wasm32-wasip1-threads` are supported targets, for loading Vello as a napi-rs addon in the browser instead of through wasm-bindgen. This needs no changes in Vello — `wgpu` supplies the Node-API interop under its `napi-web` feature — so the addition is a documented configuration (see the crate docs) plus CI coverage for both targets.
 
 ### Fixed
 

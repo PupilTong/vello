@@ -437,6 +437,37 @@ jobs:
         working-directory: sparse_strips/vello_hybrid/examples/native_webgl
 
 
+  check-stable-wasip1:
+    name: cargo check (wasm32-wasip1)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: install stable toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_STABLE_VER }}
+          targets: wasm32-wasip1, wasm32-wasip1-threads
+
+      - name: restore cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          save-if: ${{ github.event_name != 'merge_group' }}
+
+      # WASI is how Vello reaches WebGPU from a napi-rs addon: the module is
+      # loaded by @napi-rs/wasm-runtime instead of wasm-bindgen's glue, so wgpu
+      # talks to `navigator.gpu` through Node-API. Nothing in Vello is
+      # wasm-bindgen specific — its threading and blocking paths are already
+      # behind `target_arch = "wasm32"` — and this job is what keeps that true.
+      # `--no-default-features --features wgpu` is the shape a browser build
+      # uses: no `wgpu_default`, so the consumer picks the WebGPU-only backend.
+      - name: cargo check (wasm32-wasip1)
+        run: cargo check -p vello -p vello_encoding -p vello_shaders --locked --target wasm32-wasip1 --no-default-features --features wgpu
+
+      - name: cargo check (wasm32-wasip1-threads)
+        run: cargo check -p vello -p vello_encoding -p vello_shaders --locked --target wasm32-wasip1-threads --no-default-features --features wgpu
+
+
   check-stable-android:
     name: cargo check (aarch64-android)
     runs-on: ubuntu-latest

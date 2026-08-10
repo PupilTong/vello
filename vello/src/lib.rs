@@ -77,6 +77,36 @@
 //! ```
 //!
 //! See the [`examples/`](https://github.com/linebender/vello/tree/main/examples) folder to see how that code integrates with frameworks like winit.
+//!
+//!
+//! ## WebAssembly
+//!
+//! Vello runs on two WebAssembly targets, differing only in how the module
+//! reaches JavaScript:
+//!
+//! * `wasm32-unknown-unknown`, loaded by wasm-bindgen's generated glue. This is
+//!   the long-standing configuration, exercised by the `with_winit` example.
+//! * `wasm32-wasip1` and `wasm32-wasip1-threads`, loaded as a napi-rs addon
+//!   (`@napi-rs/wasm-runtime` + emnapi). wasm-bindgen cannot be used here at all —
+//!   its imports are bound by glue that only exists for `wasm32-unknown-unknown` —
+//!   so [`wgpu`] must be built with its `napi-web` feature, which reaches the same
+//!   `navigator.gpu` objects through Node-API instead.
+//!
+//! Vello itself needs no feature or code changes for either: its threading and
+//! blocking paths are already selected by `target_arch = "wasm32"`. Depend on it
+//! with `default-features = false, features = ["wgpu"]` so that `wgpu_default`
+//! does not pull in the native backends, and configure `wgpu` for WebGPU only.
+//!
+//! Two constraints apply to both WebAssembly targets, because a browser's GPU
+//! work cannot be waited on from the thread that owns the event loop:
+//!
+//! * Render with [`Renderer::render_to_texture`]. The `async` pipeline and
+//!   [`util::block_on_wgpu`] both poll the device to completion, which no browser
+//!   permits; `block_on_wgpu` panics on `wasm32` for that reason.
+//! * Treat [`wgpu::Device`], [`wgpu::Queue`] and [`Renderer`] as belonging to one
+//!   thread. The underlying JavaScript objects are not shareable, so they are
+//!   neither `Send` nor `Sync` on WebAssembly unless `wgpu`'s
+//!   `fragile-send-sync-non-atomic-wasm` feature is enabled.
 
 // LINEBENDER LINT SET - lib.rs - v2
 // See https://linebender.org/wiki/canonical-lints/
