@@ -326,6 +326,7 @@ impl WgpuEngine {
         vertex_buffer: Option<wgpu::VertexBufferLayout<'_>>,
         bind_layout: &[(BindType, wgpu::ShaderStages)],
     ) -> ShaderId {
+        let vertex_buffer = vertex_buffer.map(Some);
         let entries = Self::create_bind_group_layout_entries(bind_layout.iter().copied());
         let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
             label: None,

@@ -283,6 +283,11 @@ pub enum Error {
     #[cfg(feature = "wgpu")]
     #[error("Failed to async map a buffer")]
     BufferAsyncError(#[from] wgpu::BufferAsyncError),
+    /// Failed to access a mapped buffer range.
+    /// See [`wgpu::MapRangeError`] for more information.
+    #[cfg(feature = "wgpu")]
+    #[error("Failed to access a mapped buffer range")]
+    BufferMapRangeError(#[from] wgpu::MapRangeError),
     /// Failed to download an internal buffer for debug visualization.
     #[cfg(feature = "wgpu")]
     #[cfg(feature = "debug_layers")]
@@ -756,7 +761,7 @@ impl Renderer {
             let (sender, receiver) = futures_intrusive::channel::shared::oneshot_channel();
             buf_slice.map_async(wgpu::MapMode::Read, move |v| sender.send(v).unwrap());
             receiver.receive().await.expect("channel was closed")?;
-            let mapped = buf_slice.get_mapped_range();
+            let mapped = buf_slice.get_mapped_range()?;
             bump = Some(bytemuck::pod_read_unaligned(&mapped));
         }
         // TODO: apply logic to determine whether we need to rerun coarse, and also
